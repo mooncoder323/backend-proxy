@@ -5,9 +5,11 @@ const cors = require("cors");
 const app = express();
 const port = 5000;
 
-app.use(cors({
-    origin: 'https://front-proxy.vercel.app'
-}));
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -143,7 +145,7 @@ app.post("/check-ip", async (req, res) => {
         "An error occurred while processing your request. Please try again.",
     });
   }
-}); 
+});
 
 app.listen(port, () => {
   console.log(`IP Checker app listening at http://localhost:${port}`);
