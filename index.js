@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const FormData = require("form-data");
 const cors = require("cors");
 const app = express();
 const port = 5000;
@@ -16,140 +17,108 @@ app.use(express.json());
 
 app.get("/", (req, res) => res.json("SERVER is WORKING"));
 
-app.post("/check-ip", async (req, res) => {
-  const checkIpRisk = async (ip) => {
-    const endpoint = `https://scamalytics.com/ip/${ip}`;
-    const response = await axios.get(endpoint);
-    const html = response.data;
-    const $ = cheerio.load(html);
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
-    const risk = $(".panel_title.high_risk").text();
-    const score = $(".score").text();
-    const details = $(".panel_body").text().replace("Scamalytics", "We").trim();
 
-    return { ip, risk, score, details };
-  };
+const IpRisk = async (ip) => {
+  const endpoint = `https://scamalytics.com/ip/${ip}`;
+  const response = await axios.get(endpoint);
+  const html = response.data;
+  const $ = cheerio.load(html);
 
-  const checkIpLocation = async (ip) => {
-    const endpoint = `https://ipwhois.app/json/${ip}`;
-    const response = await axios.get(endpoint);
-    return response.data;
-  };
+  const risk = $(".panel_title.high_risk").text();
+  const score = $(".score").text();
+  const details = $(".panel_body").text().replace("Scamalytics", "We").trim();
 
-  const FormData = require("form-data");
+  return { ip, risk, score, details };
+};
 
-  const checkProxy = async (proxy) => {
-    try {
-      console.log(proxy)
-      const formData = new FormData();
-      formData.append("proxy_list", proxy);
-      const response = await axios.post(
-        "https://api.proxy-checker.net/api/proxy-checker/",
-        formData,
-        {
-          headers: formData.getHeaders(),
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("error");
-    }
-  };
+const Location = async (ip) => {
+  const endpoint = `https://ipwhois.app/json/${ip}`;
+  const response = await axios.get(endpoint);
+  return response.data;
+};
 
-  const apiKey =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDg2MWI5NTFlMWFkNDMzMWQwYTljMmQiLCJ0eXBlIjoiZGV2Iiwiand0aWQiOiI2NDg2MjM1NmZiYTU2ZTMyOWQxZTIyYTcifQ.03cADWZjonvQDQP4hmqX5rThDXIUb4C-x473LYtjqmM";
+const IpState = async (proxy) => {
+  //console.log(proxy); 
+  const endpoint = `https://api.proxy-checker.net/api/proxy-checker/`;
+  const formData = new FormData();
+  formData.append("proxy_list", proxy);
+  const response = await axios.post(endpoint, formData, {
+    headers: formData.getHeaders(),
+  });
+  //console.log(response);
+  return response.data[0];
+};
 
-  const checkGoLoginProxy = async (proxy) => {
-    const [host, port, username, password] = proxy.split(":");
-    const type = "http";
-    const endpoint = `https://api.gologin.com/browser/check_proxy`;
-    const response = await axios.post(
-      endpoint,
-      {
-        type,
-        host,
-        port,
-        username,
-        password,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
-    if (response.data.status == "success") {
-      return response.data.origin;
-    }
-    return host;
-  };
+const apiKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NDg2MWI5NTFlMWFkNDMzMWQwYTljMmQiLCJ0eXBlIjoiZGV2Iiwiand0aWQiOiI2NDg2MjM1NmZiYTU2ZTMyOWQxZTIyYTcifQ.03cADWZjonvQDQP4hmqX5rThDXIUb4C-x473LYtjqmM";
 
-  const checkGoLoginOutputProxy = async (proxy) => {
-    const [host, port, username, password] = proxy.split(":");
-    const type = "http";
-    const endpoint = `https://api.gologin.com/browser/check_proxy`;
-    const response = await axios.post(
-      endpoint,
-      {
-        type,
-        host,
-        port,
-        username,
-        password,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
-    if (response.data.status == "success") {
-      return (
-        response.data.origin + ":" + port + ":" + username + ":" + password
-      );
-    }
-    if (username && password) {
-      return host + ":" + port + ":" + username && username + ":" + password;
-    } else {
-      return host + ":" + port;
-    }
-  };
+const ipCrack = async (proxy) => {
+  const [host, port, username, password] = proxy.split(":");
+  const type = "http";
+  //const endpoint = `https://api.gologin.com/browser/check_proxy`;
+  await sleep(1000)
+  const endpoint = 'https://www.courier.com/api/tools/domain-ip-lookup/?domain=' + host;
+  const response = await axios.get(endpoint);
+  return response.data.result[response.data.result.length - 1];
+};
 
-  try {
-    const results_host = await Promise.all(
-      req.body.ip.split("\n").map((proxy) => checkGoLoginProxy(proxy))
-    );
-    const results_proxy = await Promise.all(
-      req.body.ip.split("\n").map((proxy) => checkGoLoginOutputProxy(proxy))
-    );
-
-    const results_risk = await Promise.all(
-      results_host.map((ip) => checkIpRisk(ip))
-    );
-    const results_location = await Promise.all(
-      results_host.map((ip) => checkIpLocation(ip))
-    );
-    const results_state = await Promise.all(
-      results_proxy.map((proxy) => checkProxy(proxy))
-    );
-
-    res.json({
-      risk: results_risk,
-      state: results_state,
-      location: results_location,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error:
-        "An error occurred while processing your request. Please try again.",
-    });
+const proxyCrack = async (proxy) => {
+  const real_host = await ipCrack(proxy);
+  const [host, port, username, password] = proxy.split(":");
+  const type = "http";
+  if (username && password) {
+    return real_host + ":" + port + ":" + username + ":" + password;
+  } else {
+    return real_host + ":" + port;
   }
+};
+
+app.get("/", (req, res) => res.json("SERVER is WORKING"));
+
+app.post("/check-ip", async (req, res) => {
+  const proxyArr = await Promise.all(req.body.ip.split("\n"));
+  console.log("proxyArr:::", proxyArr)////
+  const ipArr = await Promise.all(proxyArr.map((proxy) => ipCrack(proxy)));
+  console.log("ipArr:::", ipArr)
+  const res_proxyArr = await Promise.all(
+    proxyArr.map((proxy) => {
+      let p1 = proxyCrack(proxy)
+      return p1 === proxy ? null : p1
+    })
+  );
+
+  //console.log("res_proxyArr:::", res_proxyArr)
+
+  const res_IpRisk = await Promise.all(ipArr.map((ip) => IpRisk(ip)));
+  const res_location = await Promise.all(ipArr.map((ip) => Location(ip)));
+  const res_state = await Promise.all(
+    res_proxyArr.map((proxy) => {
+      //console.log(proxy);
+      if(proxy === null) {
+        return {flag : 'Fail'}
+      }else{
+        return IpState(proxy);
+      }
+      proxy === null ? {flag : 'Fail'} : IpState(proxy); 
+    })
+  );/**/
+  const ProxyPort = proxyArr.map((proxy) => {
+    return {'port': proxy.split(':')[1]};
+  })
+  res.json({
+    risk: res_IpRisk,
+    location: res_location,
+    state: ProxyPort,
+  });/**/
+  return;
 });
 
 app.listen(port, () => {
   console.log(`IP Checker app listening at http://localhost:${port}`);
 });
-
-module.exports = app;
