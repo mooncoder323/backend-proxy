@@ -39,10 +39,9 @@ app.post("/check-ip", async (req, res) => {
   const FormData = require("form-data");
 
   const checkProxy = async (proxy) => {
-    const formData = new FormData();
-    formData.append("proxy_list", proxy);
-
     try {
+      const formData = new FormData();
+      formData.append("proxy_list", proxy);
       const response = await axios.post(
         "https://api.proxy-checker.net/api/proxy-checker/",
         formData,
@@ -52,7 +51,7 @@ app.post("/check-ip", async (req, res) => {
       );
       return response.data;
     } catch (error) {
-      console.error(error);
+      console.error("error");
     }
   };
 
@@ -128,11 +127,11 @@ app.post("/check-ip", async (req, res) => {
     const results_risk = await Promise.all(
       results_host.map((ip) => checkIpRisk(ip))
     );
-    const results_state = await Promise.all(
-      results_proxy.map((proxy) => checkProxy(proxy))
-    );
     const results_location = await Promise.all(
       results_host.map((ip) => checkIpLocation(ip))
+    );
+    const results_state = await Promise.all(
+      results_proxy.map((proxy) => checkProxy(proxy))
     );
 
     res.json({
@@ -146,7 +145,7 @@ app.post("/check-ip", async (req, res) => {
         "An error occurred while processing your request. Please try again.",
     });
   }
-}); 
+});
 
 app.listen(port, () => {
   console.log(`IP Checker app listening at http://localhost:${port}`);
