@@ -7,7 +7,7 @@ const port = 5000;
 
 app.use(
   cors({
-    origin: "*",
+    origin: ["https://front-proxy.vercel.app"],
     methods: "GET, PUT, POST, OPTIONS",
   })
 );
