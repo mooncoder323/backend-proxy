@@ -40,6 +40,7 @@ app.post("/check-ip", async (req, res) => {
 
   const checkProxy = async (proxy) => {
     try {
+      console.log(proxy)
       const formData = new FormData();
       formData.append("proxy_list", proxy);
       const response = await axios.post(
