@@ -15,6 +15,8 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+app.get("/", () => res.json("SERVER is WORKING"))
+
 app.post("/check-ip", async (req, res) => {
   const checkIpRisk = async (ip) => {
     const endpoint = `https://scamalytics.com/ip/${ip}`;
