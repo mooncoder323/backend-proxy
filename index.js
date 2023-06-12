@@ -5,12 +5,11 @@ const cors = require("cors");
 const app = express();
 const port = 5000;
 
-app.use(
-  cors({
-    origin: ["https://front-proxy.vercel.app"],
-    methods: "GET, PUT, POST, OPTIONS",
-  })
-);
+const cors = require('cors');
+
+app.use(cors({
+    origin: 'https://front-proxy.vercel.app'
+}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
