@@ -6,7 +6,8 @@ const app = express();
 const port = 5000;
 
 app.use(cors({
-  origin: '*'
+  origin: '*',
+  methods: "GET, PUT, POST, OPTIONS"
 }));
 
 app.use(express.urlencoded({ extended: true }));
