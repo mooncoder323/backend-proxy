@@ -5,26 +5,17 @@ const cors = require("cors");
 const app = express();
 const port = 5000;
 
-app.use(cors({
-  origin: '*',
-  methods: "GET, PUT, POST, OPTIONS"
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET, PUT, POST, OPTIONS",
+  })
+);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.post("/check-ip", async (req, res) => {
-  // const extractIPAddresses = (proxies) => {
-  //   return proxies.map((proxy) => {
-  //     const [ip] = proxy.split(":");
-  //     return ip;
-  //   });
-  // };
-
-  // const ips = extractIPAddresses(req.body.ip.split("\n")).map((ip) => {
-  //   return ip.trim();
-  // });
-
   const checkIpRisk = async (ip) => {
     const endpoint = `https://scamalytics.com/ip/${ip}`;
     const response = await axios.get(endpoint);
@@ -159,3 +150,5 @@ app.post("/check-ip", async (req, res) => {
 app.listen(port, () => {
   console.log(`IP Checker app listening at http://localhost:${port}`);
 });
+
+module.exports = app;
